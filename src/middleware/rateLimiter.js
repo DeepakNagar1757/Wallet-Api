@@ -1,5 +1,5 @@
 import { Ratelimit } from "@upstash/ratelimit"; // example
-import { redis } from "../config/redis"; // example
+import { redis } from "../config/redis.js";
 
 const ratelimit = new Ratelimit({
   redis,
