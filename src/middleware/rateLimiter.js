@@ -1,20 +1,25 @@
-import ratelimit from "../config/upstash.js"
+import { Ratelimit } from "@upstash/ratelimit"; // example
+import { redis } from "../config/redis"; // example
 
-const rateLimiter =  async (req,res,next) =>{
-    try {
-        // userId, Ip Adress in production Grades
-        const {success} = await ratelimit.limit("My-rate-limit")
-        if(!success){
-            return res.status(429).json({
-                message: "Too many requests, please try again later."
-            })
-        } 
-        next()  
-    } catch (error) {
-        console.log("Rate Limit Error : ", error);
-        next(error)                
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "1 m"), // example
+});
+
+export default async function rateLimiter(req, res, next) {
+  try {
+    // Prefer a per-user header if sent, otherwise fallback to client IP
+    const userKey = req.headers["x-user-id"];
+    const key = userKey || req.ip || req.headers["x-forwarded-for"] || "anon";
+
+    const { success } = await ratelimit.limit(key);
+    if (!success) {
+      return res.status(429).json({ message: "Too many requests, please try again later." });
     }
+    next();
+  } catch (err) {
+    console.error("rate limiter error", err);
+    // allow request if rate limiter fails unexpectedly
+    next();
+  }
 }
-
-
-export default rateLimiter
