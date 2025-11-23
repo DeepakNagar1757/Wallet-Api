@@ -1,10 +1,4 @@
-import { Ratelimit } from "@upstash/ratelimit"; // example
-import { redis } from "../config/redis.js";
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, "1 m"), // example
-});
+import ratelimit from "../config/upstash.js";
 
 export default async function rateLimiter(req, res, next) {
   try {
